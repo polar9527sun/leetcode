@@ -1,4 +1,4 @@
-package main
+package bintree
 
 import (
 	"fmt"
@@ -23,10 +23,12 @@ func (t *Tree) Add(data int) {
 	} else {
 		queue = append(queue, t.root)
 		for len(queue) != 0 {
+			//  取出queue中的首元素
 			cur := queue[0]
-			queue = append(queue[:0], queue[0+1:]...)
+			// 删除queue中的首元素，而且是就地操作，仔细看下面的写法
+			queue = append(queue[:0], queue[1:]...)
 			// 往右树添加
-			if data > cur.Data {
+			if newNode.Data > cur.Data {
 				if cur.Right == nil {
 					cur.Right = newNode
 					newNode.Parent = cur
@@ -46,11 +48,19 @@ func (t *Tree) Add(data int) {
 	}
 }
 
+func visit(data int) {
+	fmt.Print(data, " ")
+}
+
 func visitAlongLeftBranch(n *TreeNode, s *[]*TreeNode) {
 	cur := n
 	for cur != nil {
-		fmt.Print(cur.Data, " ")
-		*s = append(*s, cur.Right)
+		visit(cur.Data)
+		// 右子树为空则不加入栈
+		if cur.Right != nil {
+			*s = append(*s, cur.Right)
+		}
+		// step forward
 		cur = cur.Left
 	}
 }
@@ -59,10 +69,12 @@ func (t *Tree) preorderTraverseIteration(node *TreeNode) {
 	var stack []*TreeNode
 	cur := node
 	for {
+		// 自顶向下，依次访问当前节点的最左侧通路的各节点
 		visitAlongLeftBranch(cur, &stack)
 		if len(stack) == 0 {
 			break
 		}
+		// 出栈
 		cur = stack[len(stack)-1]
 		stack = stack[:len(stack)-1]
 	}
@@ -71,6 +83,7 @@ func (t *Tree) preorderTraverseIteration(node *TreeNode) {
 func goAlongLeftBranch(node *TreeNode, s *[]*TreeNode) {
 	cur := node
 	for cur != nil {
+		// 将沿途的节点存入栈中，以便后续出栈后访问其右子树
 		*s = append(*s, cur)
 		cur = cur.Left
 	}
@@ -87,24 +100,29 @@ func (t *Tree) inorderTraverseIteration(node *TreeNode) {
 		}
 		cur = stack[len(stack)-1]
 		stack = stack[:len(stack)-1]
-		fmt.Print(cur.Data, " ")
+		visit(cur.Data)
+		// 对右子树进行 goAlongLeftBranch 操作
 		cur = cur.Right
 	}
 }
 
-// highest left visable leaf
+// highest left visible leaf
 func gotoHLVL(s *[]*TreeNode) {
 	cur := (*s)[len(*s)-1]
 	for ; cur != nil; cur = (*s)[len(*s)-1] {
+		// 尽量向左子树深入
 		if cur.Left != nil {
+			// 将这一层的左右子节点都入栈
 			if cur.Right != nil {
 				*s = append(*s, cur.Right)
 			}
 			*s = append(*s, cur.Left)
 		} else {
+			// 实在不行，才向右深入
 			*s = append(*s, cur.Right)
 		}
 	}
+	// 去掉栈顶的nil
 	*s = (*s)[:len(*s)-1]
 }
 
@@ -120,7 +138,7 @@ func (t *Tree) postorderTraverseIteration(node *TreeNode) {
 		}
 		cur = stack[len(stack)-1]
 		stack = stack[:len(stack)-1]
-		fmt.Print(cur.Data, " ")
+		visit(cur.Data)
 	}
 
 }
@@ -155,41 +173,4 @@ func (t *Tree) postorderTraverseRecursion(node *TreeNode) {
 		t.postorderTraverseRecursion(node.Right)
 		fmt.Print(node.Data, " ")
 	}
-}
-
-func main() {
-	tree := &Tree{}
-	tree.Add(50)
-	tree.Add(45)
-	tree.Add(40)
-	tree.Add(48)
-	tree.Add(51)
-	tree.Add(61)
-	tree.Add(71)
-
-	fmt.Println("preorderTraverse")
-	fmt.Println("Recursion")
-	tree.preorderTraverseRecursion(tree.root)
-	fmt.Println()
-	fmt.Println("Iteration")
-	tree.preorderTraverseIteration(tree.root)
-
-	fmt.Println("")
-
-	fmt.Println("inorderTraverse")
-	fmt.Println("Recursion")
-	tree.inorderTraverseRecursion(tree.root)
-	fmt.Println()
-	fmt.Println("Iteration")
-	tree.inorderTraverseIteration(tree.root)
-
-	fmt.Println("")
-
-	fmt.Println("postorderTraverse")
-	fmt.Println("Recursion")
-	tree.postorderTraverseRecursion(tree.root)
-	fmt.Println()
-	fmt.Println("Iteration")
-	tree.postorderTraverseIteration(tree.root)
-
 }
